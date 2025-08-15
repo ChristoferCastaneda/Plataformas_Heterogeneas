@@ -10,7 +10,7 @@ namespace HttpMessageParser.Tests
         public void Setup()
         {
             // Replace the following with an assigment of your actual implementation of IResponseWriter
-            responseWriter = null;
+            responseWriter = new HttpResponseWriter();
         }
 
         [Test]

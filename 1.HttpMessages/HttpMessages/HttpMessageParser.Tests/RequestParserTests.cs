@@ -10,7 +10,7 @@ namespace HttpMessageParser.Tests
         public void Setup()
         {
             // Replace the following with an assignment of your actual implementation of IRequestParser
-            requestParser = null;
+            requestParser = new HttpRequestParser();
         }
 
         [Test]

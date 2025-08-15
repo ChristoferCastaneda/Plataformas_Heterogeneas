@@ -1,49 +1,258 @@
-﻿namespace HttpMessageParser.Models
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Web;
+
+namespace HttpMessageParser.Models
 {
     public partial class HttpRequest
     {
-        /// <summary>
-        /// Returns the value of a specific header from the request. This is case-insensitive.
-        /// </summary>
-        /// <param name="headerName">The name of the header to retrieve.</param>
-        /// <returns>
-        /// The value of the specified header if it exists; otherwise, null.
-        /// </returns>
-        /// <exception cref="ArgumentException">If the <paramref name="headerName"/> is null or empty.</exception>"
+
         public string GetHeaderValue(string headerName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(headerName))
+            {
+                throw new ArgumentException("Header name cannot be null or empty", nameof(headerName));
+            }
+
+            if (Headers == null || Headers.Count == 0)
+            {
+                return null;
+            }
+
+            var matchingHeader = Headers.FirstOrDefault(h =>
+                string.Equals(h.Key, headerName, StringComparison.OrdinalIgnoreCase));
+
+            return matchingHeader.Value;
         }
 
-        /// <summary>
-        /// Extracts the query parameters from the <c>RequestTarget</c> property.
-        /// </summary>
-        /// <remarks>
-        /// If no query parameters are present, this method will return an empty dictionary.
-        /// </remarks>
-        /// <returns>
-        /// A dictionary where the keys are the parameter names and the values are the parameter values.
-        /// </returns>
-        /// <exception cref="FormatException">If the <c>RequestTarget</c> contains query parameters, but they are malformed.</exception>"
-        public Dictionary<string, string> GetQueryParameters()
+        public IDictionary<string, string> GetQueryParameters()
         {
-            throw new NotImplementedException();
+            var queryParams = new Dictionary<string, string>();
+
+            if (string.IsNullOrEmpty(RequestTarget))
+            {
+                return queryParams;
+            }
+
+            int questionMarkIndex = RequestTarget.IndexOf('?');
+            if (questionMarkIndex == -1 || questionMarkIndex == RequestTarget.Length - 1)
+            {
+                return queryParams;
+            }
+
+            string queryString = RequestTarget.Substring(questionMarkIndex + 1);
+
+            if (string.IsNullOrWhiteSpace(queryString))
+            {
+                return queryParams;
+            }
+
+            string[] pairs = queryString.Split('&');
+            foreach (string pair in pairs)
+            {
+                if (string.IsNullOrWhiteSpace(pair))
+                {
+                    continue;
+                }
+
+                int equalIndex = pair.IndexOf('=');
+                if (equalIndex == -1)
+                {
+                    throw new FormatException($"Malformed query string: parameter '{pair}' is missing a value");
+                }
+
+                string key = pair.Substring(0, equalIndex);
+                string value = pair.Substring(equalIndex + 1);
+
+                if (string.IsNullOrEmpty(key))
+                {
+                    throw new FormatException($"Malformed query string: empty parameter name in '{pair}'");
+                }
+
+                key = HttpUtility.UrlDecode(key);
+                value = HttpUtility.UrlDecode(value);
+
+                queryParams[key] = value;
+            }
+
+            return queryParams;
         }
 
-        /// <summary>
-        /// Extracts the form data from the request body. This supports both the "application/x-www-form-urlencoded" 
-        /// and the "multipart/form-data" content types.
-        /// </summary>
-        /// <remarks>
-        /// If the request has no body or the body does not contain form data, this method will return an empty dictionary.
-        /// </remarks>
-        /// <returns>
-        /// A dictionary where the keys are the form field names and the values are the form field values.
-        /// </returns>
-        /// <exception cref="FormatException">If the contents of the body are not in the correct format.</exception>
-        public Dictionary<string, string> GetFormData()
+        public IDictionary<string, string> GetFormData()
         {
-            throw new NotImplementedException();
+            var formData = new Dictionary<string, string>();
+
+            if (string.IsNullOrEmpty(Body))
+            {
+                return formData;
+            }
+
+            string contentType = GetHeaderValue("Content-Type");
+            if (string.IsNullOrEmpty(contentType))
+            {
+                return formData;
+            }
+
+            if (contentType.StartsWith("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase))
+            {
+                return ParseUrlEncodedFormData(Body);
+            }
+            else if (contentType.StartsWith("multipart/form-data", StringComparison.OrdinalIgnoreCase))
+            {
+                return ParseMultipartFormData(Body, contentType);
+            }
+
+            return formData;
+        }
+
+        private IDictionary<string, string> ParseUrlEncodedFormData(string body)
+        {
+            var formData = new Dictionary<string, string>();
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return formData;
+            }
+
+            string[] pairs = body.Split('&');
+            foreach (string pair in pairs)
+            {
+                if (string.IsNullOrWhiteSpace(pair))
+                {
+                    continue;
+                }
+
+                int equalIndex = pair.IndexOf('=');
+                if (equalIndex == -1)
+                {
+                    throw new FormatException($"Malformed form data: field '{pair}' is missing a value");
+                }
+
+                string key = pair.Substring(0, equalIndex);
+                string value = pair.Substring(equalIndex + 1);
+
+                if (string.IsNullOrEmpty(key))
+                {
+                    throw new FormatException($"Malformed form data: empty field name in '{pair}'");
+                }
+
+                key = HttpUtility.UrlDecode(key);
+                value = HttpUtility.UrlDecode(value);
+
+                formData[key] = value;
+            }
+
+            return formData;
+        }
+
+        private IDictionary<string, string> ParseMultipartFormData(string body, string contentType)
+        {
+            var formData = new Dictionary<string, string>();
+
+            string boundary = ExtractBoundary(contentType);
+            if (string.IsNullOrEmpty(boundary))
+            {
+                throw new FormatException("Malformed multipart/form-data: boundary not found in Content-Type");
+            }
+
+            string[] parts = body.Split(new[] { "--" + boundary }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string part in parts)
+            {
+                if (part.Trim() == "--" || string.IsNullOrWhiteSpace(part))
+                {
+                    continue;
+                }
+
+                ParseMultipartPart(part.Trim(), formData);
+            }
+
+            return formData;
+        }
+
+        private string ExtractBoundary(string contentType)
+        {
+            string[] parts = contentType.Split(';');
+            foreach (string part in parts)
+            {
+                string trimmed = part.Trim();
+                if (trimmed.StartsWith("boundary=", StringComparison.OrdinalIgnoreCase))
+                {
+                    string boundary = trimmed.Substring(9).Trim();
+                    if (boundary.StartsWith("\"") && boundary.EndsWith("\""))
+                    {
+                        boundary = boundary.Substring(1, boundary.Length - 2);
+                    }
+                    return boundary;
+                }
+            }
+            return null;
+        }
+
+        private void ParseMultipartPart(string part, Dictionary<string, string> formData)
+        {
+            string[] lines = part.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+            string fieldName = null;
+            int contentStartIndex = -1;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+
+                if (string.IsNullOrEmpty(line))
+                {
+                    contentStartIndex = i + 1;
+                    break;
+                }
+
+                if (line.StartsWith("Content-Disposition:", StringComparison.OrdinalIgnoreCase))
+                {
+                    fieldName = ExtractFieldName(line);
+                }
+            }
+
+            if (string.IsNullOrEmpty(fieldName))
+            {
+                throw new FormatException("Malformed multipart/form-data: missing field name in Content-Disposition");
+            }
+
+            if (contentStartIndex >= 0 && contentStartIndex < lines.Length)
+            {
+                var contentLines = new List<string>();
+                for (int i = contentStartIndex; i < lines.Length; i++)
+                {
+                    contentLines.Add(lines[i]);
+                }
+
+                string content = string.Join("\n", contentLines).Trim();
+                formData[fieldName] = content;
+            }
+            else
+            {
+                formData[fieldName] = string.Empty;
+            }
+        }
+
+        private string ExtractFieldName(string contentDisposition)
+        {
+            string[] parts = contentDisposition.Split(';');
+            foreach (string part in parts)
+            {
+                string trimmed = part.Trim();
+                if (trimmed.StartsWith("name=", StringComparison.OrdinalIgnoreCase))
+                {
+                    string name = trimmed.Substring(5).Trim();
+                    if (name.StartsWith("\"") && name.EndsWith("\""))
+                    {
+                        name = name.Substring(1, name.Length - 2);
+                    }
+                    return name;
+                }
+            }
+            return null;
         }
     }
 }

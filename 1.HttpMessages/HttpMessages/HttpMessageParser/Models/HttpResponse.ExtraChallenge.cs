@@ -1,51 +1,41 @@
-﻿namespace HttpMessageParser.Models
+﻿using System;
+using System.Linq;
+
+namespace HttpMessageParser.Models
 {
     public partial class HttpResponse
     {
-        /// <summary>
-        /// Returns the value of a specific header from the request. This is case-insensitive.
-        /// </summary>
-        /// <param name="headerName">The name of the header to retrieve.</param>
-        /// <returns>
-        /// The value of the specified header if it exists; otherwise, null.
-        /// </returns>
-        /// <exception cref="ArgumentException">If the <paramref name="headerName"/> is null or empty.</exception>"
         public string GetHeaderValue(string headerName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(headerName))
+            {
+                throw new ArgumentException("Header name cannot be null or empty", nameof(headerName));
+            }
+
+            if (Headers == null || Headers.Count == 0)
+            {
+                return null;
+            }
+
+            var matchingHeader = Headers.FirstOrDefault(h =>
+                string.Equals(h.Key, headerName, StringComparison.OrdinalIgnoreCase));
+
+            return matchingHeader.Value;
         }
 
-        /// <summary>
-        /// Returns a boolean indicating whether the response is successful.
-        /// </summary>
-        /// <returns>
-        /// True if the status code indicates a success, otherwise false.
-        /// </returns>
         public bool IsSuccess()
         {
-            throw new NotImplementedException();
+            return StatusCode >= 200 && StatusCode < 300;
         }
 
-        /// <summary>
-        /// Returns a boolean indicating whether the response is a client error.
-        /// </summary>
-        /// <returns>
-        /// True if the status code indicates a client error, otherwise false.
-        /// </returns>
         public bool IsClientError()
         {
-            throw new NotImplementedException();
+            return StatusCode >= 400 && StatusCode < 500;
         }
 
-        /// <summary>
-        /// Returns a boolean indicating whether the response is a server error.
-        /// </summary>
-        /// <returns>
-        /// True if the status code indicates a server error, otherwise false.
-        /// </returns>
         public bool IsServerError()
         {
-            throw new NotImplementedException();
+            return StatusCode >= 500 && StatusCode < 600;
         }
     }
 }
