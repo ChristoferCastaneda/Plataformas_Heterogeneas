@@ -1,0 +1,146 @@
+/* Este CSS fue un poco muy reciclado de un proyecto en code pen pero le modifique para que sea adecuado para esta tarea */
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+}
+
+h3 {
+    margin-bottom: 30px;
+}
+
+.slider-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+    background-color: #2a2a2a;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.slider-label {
+    margin-right: 15px;
+    font-weight: bold;
+}
+
+#subdivisions {
+    -webkit-appearance: none;
+    width: 300px;
+    height: 10px;
+    background: #4A90E2;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    border-radius: 5px;
+}
+
+#subdivisions:hover {
+    opacity: 1;
+}
+
+#subdivisions::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+#subdivisions::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+#slider-value {
+    margin-left: 15px;
+    font-weight: bold;
+    min-width: 30px;
+    display: inline-block;
+}
+
+canvas {
+    margin: 10px auto;
+    display: block;
+    border: 2px solid #4A90E2;
+    border-radius: 5px;
+}
+
+h1 {
+    color: #15447a;
+    margin-bottom: 30px;
+}
+
+h4 {
+    color: #1159aa;
+    margin: 0 0 10px 0;
+}
+
+/* De aqui es adaptacion para esta act */
+#gorda-photo {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 3px solid #4A90E2;
+    margin-bottom: 30px;
+}
+
+.text {
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    line-height: 1.6;
+}
+
+a {
+    color: #4A90E2;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+p {
+    margin: 5px 0;
+}
+
+.link-button{
+    display: inline-block;
+    background-color: #4A90E2;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.link-button:hover {
+    background-color: #ffffff;
+    text-decoration: none;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
