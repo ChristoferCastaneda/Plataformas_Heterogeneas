@@ -12,29 +12,57 @@ namespace WebPlatformServer
 {
     public class Server
     {
-        // Propiedades para configurar el servidor (Utiliza el puerto 8080 por defecto)
-        public int Port { get; set; } = 8080; 
-        public string StaticDirectory { get; set; } = "./static"; 
+        // Propiedades para configurar el servidor
+        public int Port { get; set; } = 8080;
+        public string StaticDirectory { get; set; } = "./static";
+        public Dictionary<string, string> Routes { get; set; } = new Dictionary<string, string>();
 
-        private TcpListener _listener;
+        private TcpListener? _listener; // Hacer nullable para evitar warnings
         private bool _isRunning;
         private readonly HttpRequestParser _requestParser;
         private readonly HttpResponseWriter _responseWriter;
 
-        // Constructor
+        // Constructor sin parámetros
         public Server()
         {
             _requestParser = new HttpRequestParser();
             _responseWriter = new HttpResponseWriter();
+
+            // Rutas por defecto
+            Routes = new Dictionary<string, string>
+            {
+                { "/", "/index.html" }
+            };
         }
 
-        // Constructor con parámetros para mostrar la pagina correspondiente (el index porque no pude meter el bendito diccionario porque fallaba)
+        // Constructor con puerto y directorio
         public Server(int port = 8080, string staticDirectory = "./static")
         {
             Port = port;
             StaticDirectory = staticDirectory;
             _requestParser = new HttpRequestParser();
             _responseWriter = new HttpResponseWriter();
+
+            // Rutas por defecto
+            Routes = new Dictionary<string, string>
+            {
+                { "/", "/index.html" }
+            };
+        }
+
+        // Constructor con puerto, directorio y rutas (NUEVO)
+        public Server(int port = 8080, string staticDirectory = "./static", Dictionary<string, string>? routes = null)
+        {
+            Port = port;
+            StaticDirectory = staticDirectory;
+            _requestParser = new HttpRequestParser();
+            _responseWriter = new HttpResponseWriter();
+
+            // Usar las rutas proporcionadas o las por defecto
+            Routes = routes ?? new Dictionary<string, string>
+            {
+                { "/", "/index.html" }
+            };
         }
 
         public void Start()
@@ -48,12 +76,16 @@ namespace WebPlatformServer
 
                 Console.WriteLine($"Servidor iniciado en el puerto {Port}");
                 Console.WriteLine($"Directorio estático: {Path.GetFullPath(StaticDirectory)}");
+                Console.WriteLine("Rutas configuradas:");
+                foreach (var route in Routes)
+                {
+                    Console.WriteLine($"  {route.Key} -> {route.Value}");
+                }
                 Console.WriteLine("Presiona Ctrl+C para detener el servidor\n");
 
-                // Manejar múltiples conexiones (utiliza Task.Run para manejar cada conexión en un hilo separado)
+                // Manejar múltiples conexiones
                 while (_isRunning)
                 {
-                    // Esperar por una conexión entrante
                     try
                     {
                         TcpClient client = _listener.AcceptTcpClient();
@@ -61,7 +93,6 @@ namespace WebPlatformServer
                     }
                     catch (ObjectDisposedException)
                     {
-                        // El listener fue cerrado, salir del bucle
                         break;
                     }
                 }
@@ -78,18 +109,16 @@ namespace WebPlatformServer
 
         private async Task HandleClient(TcpClient client)
         {
-            NetworkStream stream = null;
+            NetworkStream? stream = null;
 
             try
             {
                 stream = client.GetStream();
 
-                // Leer la petición del cliente
                 var requestBuilder = new StringBuilder();
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
-                // Leer la petición completa
                 do
                 {
                     bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
@@ -104,10 +133,8 @@ namespace WebPlatformServer
                     string requestText = requestBuilder.ToString();
                     Console.WriteLine($"Petición recibida:\n{requestText}");
 
-                    // Procesar la petición y generar respuesta con el codigo que se hizo en la act 1
                     string response = ProcessRequest(requestText);
 
-                    // Enviar la respuesta
                     byte[] responseBytes = Encoding.UTF8.GetBytes(response);
                     await stream.WriteAsync(responseBytes, 0, responseBytes.Length);
                     await stream.FlushAsync();
@@ -117,7 +144,6 @@ namespace WebPlatformServer
             {
                 Console.WriteLine($"Error procesando cliente: {ex.Message}");
 
-                // Enviar respuesta de error 500
                 try
                 {
                     if (stream != null && stream.CanWrite)
@@ -132,7 +158,6 @@ namespace WebPlatformServer
             }
             finally
             {
-                // Cerrar la conexión
                 try
                 {
                     stream?.Close();
@@ -142,12 +167,10 @@ namespace WebPlatformServer
             }
         }
 
-        //Codigo altamente reutilizado de la actividad 1 con algunas modificaciones para que funcione con archivos estaticos
         private string ProcessRequest(string requestText)
         {
             try
             {
-
                 HttpRequest request = _requestParser.ParseRequest(requestText);
                 if (request.Method.ToUpper() != "GET")
                 {
@@ -162,7 +185,12 @@ namespace WebPlatformServer
                     requestPath = requestPath.Substring(0, queryIndex);
                 }
 
-                if (requestPath == "/")
+                // Aplicar rutas configuradas
+                if (Routes.ContainsKey(requestPath))
+                {
+                    requestPath = Routes[requestPath];
+                }
+                else if (requestPath == "/")
                 {
                     requestPath = "/index.html";
                 }
@@ -185,7 +213,6 @@ namespace WebPlatformServer
                     }
 
                     byte[] fileContent = File.ReadAllBytes(filePath);
-
                     string contentType = GetContentType(filePath);
 
                     return CreateSuccessResponse(fileContent, contentType);
@@ -217,11 +244,9 @@ namespace WebPlatformServer
 
         private string CreateSuccessResponse(byte[] content, string contentType)
         {
-
-            string bodyContent = null;
+            string? bodyContent = null;
             if (content.Length > 0)
             {
-
                 if (IsTextContentType(contentType))
                 {
                     bodyContent = Encoding.UTF8.GetString(content);
