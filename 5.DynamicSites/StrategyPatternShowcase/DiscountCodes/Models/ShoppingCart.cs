@@ -1,4 +1,6 @@
-﻿namespace DiscountCodes.Models
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace DiscountCodes.Models
 {
     public class ShoppingCart
     {
@@ -49,6 +51,8 @@
                     return Apply10PercentOff();
                 case "5USDOFF":
                     return Apply5UsdOff();
+                case "BRAND1MANIA":
+                    return ApplyBrand1Discount();
                 default:
                     return items.Sum(item => item.Price);
             }
@@ -97,6 +101,22 @@
         {
             decimal originalTotal = items.Sum(item => item.Price);
             return Math.Max(0, originalTotal - 5.00m);
+        }
+        private decimal ApplyBrand1Discount()
+        {
+            decimal total = 0;
+            foreach (var item in items)
+            {
+                if (item.Brand == "Brand1")
+                {
+                    total += item.Price * 0.5m;
+                }
+                else
+                {
+                    total += item.Price;
+                }
+            }
+            return total;
         }
     }
 }
