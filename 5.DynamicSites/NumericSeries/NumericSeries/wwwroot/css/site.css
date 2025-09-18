@@ -12,6 +12,19 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
+//Sacado defs una web que encontre
+.boton-estilo {
+    background-color: #4CAF50; /* Color de fondo */
+    color: white; /* Color de texto */
+    padding: 10px 20px; /* Relleno interno */
+    text-align: center; /* Alineación del texto */
+    text-decoration: none; /* Eliminar el subrayado */
+    display: inline-block; /* Para que pueda tener padding y márgenes */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de mano al pasar por encima */
+}
+
 html {
   position: relative;
   min-height: 100%;

@@ -16,6 +16,7 @@ namespace NumericSeries.Controllers
         public IActionResult Index()
         {
             return Redirect("series/natural/0");
+
         }
 
 
