@@ -28,4 +28,43 @@
     </div>
 </form>
 
+<div class="row mt-4">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var article in Model)
+        {
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a asp-controller="Articles" asp-action="Details" asp-route-id="@article.Id">
+                                @article.Title
+                            </a>
+                        </h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            By @article.AuthorName
+                        </h6>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                Published: @article.PublishedDate.ToString("MMM dd, yyyy HH:mm")
+                            </small>
+                        </p>
+                        <a asp-controller="Articles" asp-action="Details" asp-route-id="@article.Id"
+                           class="btn btn-primary btn-sm">Read More</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="alert alert-info">
+                No articles found :( <a asp-controller="Articles" asp-action="Create">Create the first one</a>
+            </div>
+        </div>
+    }
+</div>
+
+
 TODO: Render existing articles

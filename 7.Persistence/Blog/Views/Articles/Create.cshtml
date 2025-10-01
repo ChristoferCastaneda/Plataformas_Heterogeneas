@@ -1,5 +1,74 @@
-﻿@{
+﻿@model Blog.Models.Article
+
+@{
     ViewData["Title"] = "Create Article";
 }
 
-<h1>Create Article</h1>
+<h1>Create New Article</h1>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+                <small class="form-text text-muted">Maximum 100 characters</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="AuthorName" class="form-label"></label>
+                <input asp-for="AuthorName" class="form-control" />
+                <span asp-validation-for="AuthorName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="AuthorEmail" class="form-label"></label>
+                <input asp-for="AuthorEmail" class="form-control" />
+                <span asp-validation-for="AuthorEmail" class="text-danger"></span>
+                <small class="form-text text-muted">Please enter a valid email address</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Content" class="form-label"></label>
+                <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+                <span asp-validation-for="Content" class="text-danger"></span>
+                <small class="form-text text-muted">Minimum 10 characters</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Publish Article
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Tips for a Great Article</h5>
+                <ul class="small">
+                    <li>Choose a descriptive title</li>
+                    <li>Use your real name and email</li>
+                    <li>Write clear, engaging content</li>
+                    <li>Check your spelling and grammar</li>
+                    <li>Be respectful and constructive</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

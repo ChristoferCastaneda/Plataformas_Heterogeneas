@@ -1,17 +1,117 @@
-﻿@model Blog.Models.ArticleDetailsViewModel
+﻿
+@model Blog.Models.ArticleDetailsViewModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Article.Title;
 }
 
-<h1>Details</h1>
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Article Details -->
+        <article>
+            <h1 class="mb-3">@Model.Article.Title</h1>
+            
+            <div class="text-muted mb-4">
+                <div>
+                    <strong>Author:</strong> @Model.Article.AuthorName 
+                    (<a href="mailto:@Model.Article.AuthorEmail">@Model.Article.AuthorEmail</a>)
+                </div>
+                <div>
+                    <strong>Published:</strong> @Model.Article.PublishedDate.ToString("MMMM dd, yyyy HH:mm")
+                </div>
+            </div>
+            
+            <div class="article-content">
+                @Html.Raw(Model.Article.Content.Replace("\n", "<br/>"))
+            </div>
+        </article>
+        
+        <hr class="my-5" />
+        
+        <!-- Comments Section -->
+        <section>
+            <h2>Comments (@(Model.Comments?.Count() ?? 0))</h2>
+            
+            <!-- Comment Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Add a Comment</h5>
+                    <form asp-controller="Articles" asp-action="AddComment" asp-route-articleId="@Model.Article.Id" method="post">
+                        <div class="form-group mb-3">
+                            <label for="Content" class="form-label">Your Comment</label>
+                            <textarea name="Content" 
+                                     class="form-control" 
+                                     rows="3" 
+                                     required 
+                                     minlength="2"
+                                     maxlength="1000"
+                                     placeholder="Write your comment here..."></textarea>
+                            <div class="invalid-feedback">
+                                Please enter a comment (2-1000 characters).
+                            </div>
+                            <small class="form-text text-muted">Minimum 2 characters, maximum 1000 characters</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Post Comment
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Comments List -->
+            @if (Model.Comments != null && Model.Comments.Any())
+            {
+                <div class="comments-list">
+                    @foreach (var comment in Model.Comments.OrderByDescending(c => c.PublishedDate))
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="card-text">
+                                    @Html.Raw(comment.Content.Replace("\n", "<br/>"))
+                                </div>
+                                <div class="text-muted mt-2">
+                                    <small>
+                                        <i class="bi bi-clock"></i> 
+                                        Posted on @comment.PublishedDate.ToString("MMM dd, yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No comments yet. Be the first to comment!
+                </div>
+            }
+        </section>
+        
+        <div class="mt-4">
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Articles
+            </a>
+        </div>
+    </div>
+</div>
 
-TODO: Render article
-
-<h2>Comments</h2>
-
-TODO: Add comment form
-
-<br />
-
-TODO: Render comments
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Form validation
+        (function() {
+            'use strict';
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+}
