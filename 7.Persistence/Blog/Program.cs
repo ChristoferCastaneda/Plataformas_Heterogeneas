@@ -1,4 +1,7 @@
 using Blog.Data;
+using Microsoft.EntityFrameworkCore;
+
+using System.ComponentModel.DataAnnotations;
 
 namespace Blog
 {
@@ -8,26 +11,18 @@ namespace Blog
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            //esto me lo dio gemini para que no me diera error de DateTimeOffset
+            string path = builder.Environment.ContentRootPath;
+            AppDomain.CurrentDomain.SetData("DataDirectory", path);
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnectionString");
+            builder.Services.AddDbContext<BlogArtDbContext>(options =>
+                options.UseSqlite(connectionString));
+
+            builder.Services.AddScoped<IArticleRepository, EFArticleRepository>();
+
             builder.Services.AddControllersWithViews();
 
-            var databaseConfig = builder.Configuration.GetSection("DatabaseConfig").Get<DatabaseConfig>();
-            if (databaseConfig!.UseInMemoryDatabase)
-            {
-                builder.Services.AddSingleton<IArticleRepository, MemoryArticleRepository>();
-            }
-            else
-            {
-                builder.Services.AddSingleton<IArticleRepository>(services =>
-                {
-                    var config = services.GetRequiredService<IConfiguration>();
-                    var repository = new ArticleRepository(databaseConfig);
-
-                    repository.EnsureCreated();
-
-                    return repository;
-                });
-            }
 
             var app = builder.Build();
 
