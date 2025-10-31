@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Política de Privacidad";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>Esta es la política de privacidad de nuestra aplicación.</p>
+
+<h3>Información que Recopilamos</h3>
+<p>Recopilamos la siguiente información cuando te registras:</p>
+<ul>
+    <li>Nombre de usuario</li>
+    <li>Nombre completo</li>
+    <li>Correo electrónico</li>
+    <li>Fecha de nacimiento</li>
+</ul>
+
+<h3>Seguridad</h3>
+<p>Tomamos la seguridad muy en serio:</p>
+<ul>
+    <li>Todas las contraseñas se almacenan usando hash con sal (PBKDF2 con HMACSHA256)</li>
+    <li>Las sesiones se manejan de forma segura con cookies HttpOnly</li>
+    <li>Las sesiones expiran después de 5 minutos de inactividad</li>
+    <li>Los IDs de sesión son generados usando criptografía segura (128 bits)</li>
+</ul>
